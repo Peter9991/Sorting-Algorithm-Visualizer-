@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Visualizer — CSCI208</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ec;
+    --surface: #ffffff;
+    --surface2: #ede9e0;
+    --border: #d8d2c6;
+    --accent: #c0392b;
+    --accent2: #2c7a7b;
+    --accent3: #d97706;
+    --green: #2d6a4f;
+    --red: #c0392b;
+    --text: #1a1612;
+    --muted: #8a8070;
+    --bar-default: #c8bfb0;
+    --bar-compare: #c0392b;
+    --bar-swap: #d97706;
+    --bar-sorted: #2d6a4f;
+    --bar-pivot: #7c3aed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* PAPER TEXTURE BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 15% 10%, rgba(192,57,43,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 85% 80%, rgba(44,122,123,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(217,119,6,0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 56px 40px 40px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(192,57,43,0.05) 0%, transparent 100%);
+    text-align: center;
+    position: relative;
+  }
+
+  .course-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(192,57,43,0.1);
+    border: 1px solid rgba(192,57,43,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+  .course-badge::before { content: '▸'; }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  h1 span {
+    color: var(--accent);
+    font-style: normal;
+  }
+
+  .subtitle {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+
+  /* ── TEAM MEMBERS ── */
+  .team-section {
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .team-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .team-member {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 14px 6px 8px;
+  }
+
+  .member-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .member-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .member-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ── ALGO PICKER ── */
+  .picker-section {
+    padding: 48px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .algo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .algo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  }
+
+  .algo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.25s;
+    border-radius: 16px;
+  }
+
+  .algo-card:hover { transform: translateY(-3px); border-color: rgba(192,57,43,0.4); box-shadow: 0 8px 24px rgba(192,57,43,0.1); }
+  .algo-card:hover::before { opacity: 1; }
+  .algo-card.active {
+    border-color: var(--accent);
+    background: rgba(192,57,43,0.05);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(192,57,43,0.15);
+  }
+  .algo-card.active .algo-num { color: var(--accent); }
+  .algo-card.active .algo-name { color: var(--text); }
+
+  .algo-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .algo-name {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .algo-complexity {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+  }
+
+  .algo-icon {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 24px;
+    opacity: 0.25;
+  }
+
+  /* ── MAIN PANEL ── */
+  .main-panel {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+    display: none;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeSlideUp 0.4s ease both;
+  }
+  .main-panel.visible { display: flex; }
+
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── VISUALIZER + CODE SPLIT ── */
+  .controls-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control-group label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .control-group .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    margin-left: 6px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    width: 140px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 1px 4px rgba(192,57,43,0.3);
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(192,57,43,0.3);
+  }
+  .btn-primary:hover { background: #a93226; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(192,57,43,0.4); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-group { display: flex; gap: 10px; margin-left: auto; }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.running { background: var(--accent3); animation: pulse 1s infinite; }
+  .status-dot.done { background: var(--green); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── VISUALIZER + CODE SPLIT ── */
+  .split-view {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .split-view { grid-template-columns: 1fr; }
+  }
+
+  /* ── HISTOGRAM ── */
+  .viz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .viz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .viz-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  #bars-container {
+    height: 280px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 0 4px;
+  }
+
+  .bar {
+    flex: 1;
+    background: var(--bar-default);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.1s ease;
+    position: relative;
+    min-width: 4px;
+  }
+  .bar.compare { background: var(--bar-compare); box-shadow: 0 0 10px rgba(192,57,43,0.4); }
+  .bar.swap    { background: var(--bar-swap);    box-shadow: 0 0 10px rgba(217,119,6,0.4); }
+  .bar.sorted  { background: var(--bar-sorted);  box-shadow: 0 0 10px rgba(45,106,79,0.35); }
+  .bar.pivot   { background: var(--bar-pivot);   box-shadow: 0 0 10px rgba(124,58,237,0.45); }
+
+  /* ── STATS ── */
+  .stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  #stat-comparisons { color: var(--accent); }
+  #stat-swaps { color: var(--accent3); }
+  #stat-time { color: var(--accent2); }
+
+  /* ── CODE PANEL ── */
+  .code-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .code-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #ef4444; }
+  .code-dots span:nth-child(2) { background: #f59e0b; }
+  .code-dots span:nth-child(3) { background: #10b981; }
+  .code-filename {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  .code-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px 0;
+    max-height: 360px;
+  }
+
+  .code-line {
+    display: flex;
+    gap: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 22px;
+    padding: 1px 0;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .code-line.active {
+    background: rgba(192,57,43,0.08);
+  }
+  .code-line.active::before {
+    content: '▶';
+    position: absolute;
+    left: 6px;
+    color: var(--accent);
+    font-size: 9px;
+    top: 6px;
+  }
+  .line-num {
+    width: 36px;
+    text-align: right;
+    color: var(--muted);
+    padding-right: 12px;
+    flex-shrink: 0;
+    padding-left: 16px;
+    user-select: none;
+  }
+  .line-code {
+    color: var(--text);
+    white-space: pre;
+    padding-right: 16px;
+  }
+
+  /* Python syntax highlight — light theme */
+  .kw  { color: #9b2335; font-weight: 600; }
+  .fn  { color: #1a6b6b; }
+  .st  { color: #2d6a4f; }
+  .cm  { color: #a08c78; font-style: italic; }
+  .nm  { color: #b45309; }
+  .op  { color: #7c3aed; }
+
+  /* ── DESCRIPTION CARD ── */
+  .desc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .algo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(44,122,123,0.1);
+    border: 1px solid rgba(44,122,123,0.3);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    margin-bottom: 16px;
+  }
+
+  .desc-title {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .desc-text {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+    margin-bottom: 20px;
+  }
+
+  .complexity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .complexity-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .complexity-item .c-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .complexity-item .c-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+    background: var(--surface2);
+  }
+  footer span { color: var(--accent); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="course-badge">CSCI208: Design and Analysis of Algorithms</div>
+    <h1>Sorting <span>Visualizer</span></h1>
+    <p class="subtitle">Interactive algorithm visualization with step-by-step code tracing &amp; audio feedback</p>
+
+    <div class="team-section">
+      <div class="team-label">Project Team</div>
+      <div class="team-grid">
+        <div class="team-member">
+          <div class="member-avatar">PY</div>
+          <div>
+            <div class="member-name">Peter Yakoub</div>
+            <div class="member-id">221000217</div>
+          </div>
+        </div>
+        <div class="team-member">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#2c7a7b,#1a6b6b)">SU</div>
+          <div>
+            <div class="member-name">Sotir Usama</div>
+            <div class="member-id">210000694</div>
+          </div>
+        </div>
+        <div class="team-member">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#d97706,#b45309)">YE</div>
+          <div>
+            <div class="member-name">Yusuf Ehab</div>
+            <div class="member-id">221002262</div>
+          </div>
+        </div>
+        <div class="team-member">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">MA</div>
+          <div>
+            <div class="member-name">Mahmoud Ali</div>
+            <div class="member-id">221001021</div>
+          </div>
+        </div>
+        <div class="team-member">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#2d6a4f,#1b4332)">MS</div>
+          <div>
+            <div class="member-name">Mohamed Samy</div>
+            <div class="member-id">221000976</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ALGORITHM PICKER -->
+  <section class="picker-section">
+    <div class="section-label">Choose Algorithm</div>
+    <div class="algo-grid">
+
+      <div class="algo-card" data-algo="bubble" onclick="selectAlgo('bubble')">
+        <span class="algo-icon">🫧</span>
+        <span class="algo-num">01</span>
+        <div class="algo-name">Bubble Sort</div>
+        <div class="algo-complexity">O(n²)</div>
+      </div>
+
+      <div class="algo-card" data-algo="selection" onclick="selectAlgo('selection')">
+        <span class="algo-icon">🎯</span>
+        <span class="algo-num">02</span>
+        <div class="algo-name">Selection Sort</div>
+        <div class="algo-complexity">O(n²)</div>
+      </div>
+
+      <div class="algo-card" data-algo="insertion" onclick="selectAlgo('insertion')">
+        <span class="algo-icon">🃏</span>
+        <span class="algo-num">03</span>
+        <div class="algo-name">Insertion Sort</div>
+        <div class="algo-complexity">O(n²)</div>
+      </div>
+
+      <div class="algo-card" data-algo="merge" onclick="selectAlgo('merge')">
+        <span class="algo-icon">🔀</span>
+        <span class="algo-num">04</span>
+        <div class="algo-name">Merge Sort</div>
+        <div class="algo-complexity">O(n log n)</div>
+      </div>
+
+      <div class="algo-card" data-algo="quick" onclick="selectAlgo('quick')">
+        <span class="algo-icon">⚡</span>
+        <span class="algo-num">05</span>
+        <div class="algo-name">Quick Sort</div>
+        <div class="algo-complexity">O(n log n) avg</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MAIN PANEL (hidden until algo selected) -->
+  <div class="main-panel" id="main-panel">
+
+    <!-- CONTROLS -->
+    <div class="controls-bar">
+      <div class="status-dot" id="status-dot"></div>
+
+      <div class="control-group">
+        <label>Elements <span class="val" id="size-val">12</span></label>
+        <input type="range" id="size-slider" min="2" max="25" value="12" oninput="onSizeChange(this.value)">
+      </div>
+
+      <div class="control-group">
+        <label>Speed <span class="val" id="speed-val">Medium</span></label>
+        <input type="range" id="speed-slider" min="1" max="5" value="3" oninput="onSpeedChange(this.value)">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="shuffle-btn" onclick="shuffleArray()">⟳ Shuffle</button>
+        <button class="btn btn-primary"   id="run-btn"     onclick="runSort()">▶ Run</button>
+        <button class="btn btn-secondary" id="stop-btn"    onclick="stopSort()" disabled>■ Stop</button>
+      </div>
+    </div>
+
+    <!-- VISUALIZER + CODE -->
+    <div class="split-view">
+
+      <!-- HISTOGRAM -->
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">Array State</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div>Compare</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-swap)"></div>Swap</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-pivot)"></div>Pivot</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div>Sorted</div>
+          </div>
+        </div>
+        <div id="bars-container"></div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">Comparisons</div><div class="stat-val" id="stat-comparisons">0</div></div>
+          <div class="stat"><div class="stat-label">Swaps / Moves</div><div class="stat-val" id="stat-swaps">0</div></div>
+          <div class="stat"><div class="stat-label">Time (ms)</div><div class="stat-val" id="stat-time">—</div></div>
+        </div>
+      </div>
+
+      <!-- CODE PANEL -->
+      <div class="code-card">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-filename" id="code-filename">algorithm.py</div>
+        </div>
+        <div class="code-body" id="code-body"></div>
+      </div>
+
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="desc-card" id="desc-card">
+      <div class="algo-badge" id="desc-badge">— / —</div>
+      <div class="desc-title" id="desc-title">Select an algorithm</div>
+      <div class="desc-text" id="desc-text"></div>
+      <div class="complexity-grid">
+        <div class="complexity-item">
+          <span class="c-label">Best Case</span>
+          <div class="c-val" id="c-best">—</div>
+        </div>
+        <div class="complexity-item">
+          <span class="c-label">Average Case</span>
+          <div class="c-val" id="c-avg">—</div>
+        </div>
+        <div class="complexity-item">
+          <span class="c-label">Worst Case</span>
+          <div class="c-val" id="c-worst">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-panel -->
+
+  <footer>
+    Built for <span>CSCI208</span> · Design and Analysis of Algorithms · Nile University
+  </footer>
+
+</div><!-- /wrapper -->
+
+<script>
+/* ═══════════════════════════════════════
+   DATA
+═══════════════════════════════════════ */
+const ALGOS = {
+  bubble: {
+    name: 'Bubble Sort',
+    badge: 'Comparison-Based · Stable',
+    desc: 'Bubble Sort repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. Each pass bubbles the largest unsorted element to its correct position at the end of the array.',
+    best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)',
+    filename: 'bubble_sort.py',
+    code: [
+      { text: 'def bubble_sort(arr):', tags: 'fn' },
+      { text: '    n = len(arr)', tags: '' },
+      { text: '    for i in range(n):',              tags: 'kw',   id: 'outer' },
+      { text: '        swapped = False',             tags: '',     id: 'init_swap' },
+      { text: '        for j in range(n - i - 1):', tags: 'kw',   id: 'inner' },
+      { text: '            if arr[j] > arr[j+1]:',  tags: 'kw',   id: 'compare' },
+      { text: '                arr[j], arr[j+1] = arr[j+1], arr[j]', tags: '', id: 'swap' },
+      { text: '                swapped = True',      tags: '',     id: 'mark_swap' },
+      { text: '        if not swapped:', tags: 'kw', id: 'early_exit' },
+      { text: '            break  # already sorted', tags: 'cm', id: 'break' },
+      { text: '    return arr', tags: 'kw', id: 'return' },
+    ]
+  },
+  selection: {
+    name: 'Selection Sort',
+    badge: 'In-Place · Not Stable',
+    desc: 'Selection Sort divides the array into sorted and unsorted portions. In each pass, it finds the minimum element in the unsorted portion and places it at the beginning, gradually building up the sorted portion from left to right.',
+    best: 'O(n²)', avg: 'O(n²)', worst: 'O(n²)',
+    filename: 'selection_sort.py',
+    code: [
+      { text: 'def selection_sort(arr):',             tags: 'fn' },
+      { text: '    n = len(arr)',                     tags: '' },
+      { text: '    for i in range(n):',               tags: 'kw', id: 'outer' },
+      { text: '        min_idx = i',                  tags: '',   id: 'min_init' },
+      { text: '        for j in range(i+1, n):',      tags: 'kw', id: 'inner' },
+      { text: '            if arr[j] < arr[min_idx]:', tags: 'kw', id: 'compare' },
+      { text: '                min_idx = j',          tags: '',   id: 'update_min' },
+      { text: '        if min_idx != i:',             tags: 'kw', id: 'check' },
+      { text: '            arr[i], arr[min_idx] = arr[min_idx], arr[i]', tags: '', id: 'swap' },
+      { text: '    return arr',                       tags: 'kw', id: 'return' },
+    ]
+  },
+  insertion: {
+    name: 'Insertion Sort',
+    badge: 'Adaptive · Stable',
+    desc: 'Insertion Sort builds the sorted array one element at a time. It picks each element and inserts it into its correct position among the already-sorted elements, shifting larger elements one step to the right to make room.',
+    best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)',
+    filename: 'insertion_sort.py',
+    code: [
+      { text: 'def insertion_sort(arr):',     tags: 'fn' },
+      { text: '    n = len(arr)',              tags: '' },
+      { text: '    for i in range(1, n):',    tags: 'kw', id: 'outer' },
+      { text: '        key = arr[i]',         tags: '',   id: 'key' },
+      { text: '        j = i - 1',            tags: '',   id: 'j_init' },
+      { text: '        while j >= 0 and arr[j] > key:', tags: 'kw', id: 'while' },
+      { text: '            arr[j+1] = arr[j]', tags: '', id: 'shift' },
+      { text: '            j -= 1',           tags: '',   id: 'j_dec' },
+      { text: '        arr[j+1] = key',       tags: '',   id: 'place' },
+      { text: '    return arr',               tags: 'kw', id: 'return' },
+    ]
+  },
+  merge: {
+    name: 'Merge Sort',
+    badge: 'Divide & Conquer · Stable',
+    desc: 'Merge Sort is a divide-and-conquer algorithm. It splits the array in half, recursively sorts both halves, then merges them back together in sorted order. It guarantees O(n log n) performance at the cost of extra memory.',
+    best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)',
+    filename: 'merge_sort.py',
+    code: [
+      { text: 'def merge_sort(arr):',                       tags: 'fn' },
+      { text: '    if len(arr) <= 1:',                      tags: 'kw', id: 'base' },
+      { text: '        return arr',                         tags: 'kw' },
+      { text: '    mid = len(arr) // 2',                    tags: '',   id: 'mid' },
+      { text: '    left  = merge_sort(arr[:mid])',          tags: '',   id: 'rec_left' },
+      { text: '    right = merge_sort(arr[mid:])',          tags: '',   id: 'rec_right' },
+      { text: '    return merge(left, right)',              tags: 'kw', id: 'merge_call' },
+      { text: '',                                           tags: '' },
+      { text: 'def merge(left, right):',                   tags: 'fn' },
+      { text: '    result = []',                           tags: '',   id: 'init_res' },
+      { text: '    i = j = 0',                             tags: '',   id: 'pointers' },
+      { text: '    while i < len(left) and j < len(right):', tags: 'kw', id: 'while' },
+      { text: '        if left[i] <= right[j]:',           tags: 'kw', id: 'compare' },
+      { text: '            result.append(left[i])',        tags: '',   id: 'append_left' },
+      { text: '            i += 1',                        tags: '' },
+      { text: '        else:',                             tags: 'kw' },
+      { text: '            result.append(right[j])',       tags: '',   id: 'append_right' },
+      { text: '            j += 1',                        tags: '' },
+      { text: '    result += left[i:]',                   tags: '',   id: 'remainder' },
+      { text: '    result += right[j:]',                  tags: '' },
+      { text: '    return result',                         tags: 'kw', id: 'return' },
+    ]
+  },
+  quick: {
+    name: 'Quick Sort',
+    badge: 'Divide & Conquer · Not Stable',
+    desc: 'Quick Sort picks a pivot element and partitions the array around it, placing smaller elements before it and larger after. It then recursively sorts both partitions. With a good pivot, it is one of the fastest sorting algorithms in practice.',
+    best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)',
+    filename: 'quick_sort.py',
+    code: [
+      { text: 'def quick_sort(arr, low=0, high=None):',   tags: 'fn' },
+      { text: '    if high is None:',                     tags: 'kw' },
+      { text: '        high = len(arr) - 1',              tags: '' },
+      { text: '    if low < high:',                       tags: 'kw', id: 'base' },
+      { text: '        pi = partition(arr, low, high)',   tags: '',   id: 'partition_call' },
+      { text: '        quick_sort(arr, low, pi - 1)',     tags: '',   id: 'rec_left' },
+      { text: '        quick_sort(arr, pi + 1, high)',    tags: '',   id: 'rec_right' },
+      { text: '    return arr',                           tags: 'kw', id: 'return' },
+      { text: '',                                         tags: '' },
+      { text: 'def partition(arr, low, high):',           tags: 'fn' },
+      { text: '    pivot = arr[high]',                    tags: '',   id: 'pivot' },
+      { text: '    i = low - 1',                         tags: '' },
+      { text: '    for j in range(low, high):',          tags: 'kw', id: 'loop' },
+      { text: '        if arr[j] <= pivot:',             tags: 'kw', id: 'compare' },
+      { text: '            i += 1',                      tags: '' },
+      { text: '            arr[i], arr[j] = arr[j], arr[i]', tags: '', id: 'swap' },
+      { text: '    arr[i+1], arr[high] = arr[high], arr[i+1]', tags: '', id: 'place_pivot' },
+      { text: '    return i + 1',                        tags: 'kw', id: 'ret_pi' },
+    ]
+  }
+};
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let currentAlgo = null;
+let array = [];
+let steps = [];        // [{bars, highlightLine, comparisons, swaps, type}]
+let stepIndex = 0;
+let running = false;
+let stopFlag = false;
+let startTime = null;
+let comparisons = 0, swaps = 0;
+let audioCtx = null;
+
+const speedMap = { 1: 600, 2: 300, 3: 120, 4: 50, 5: 10 };
+const speedLabel = { 1: 'Slowest', 2: 'Slow', 3: 'Medium', 4: 'Fast', 5: 'Fastest' };
+let currentSpeed = 3;
+
+/* ═══════════════════════════════════════
+   INIT AUDIO
+═══════════════════════════════════════ */
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, type = 'triangle', duration = 0.1, vol = 0.15) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function barFreq(val, max) {
+  return 180 + (val / max) * 900;
+}
+
+function playSuccessFanfare(n) {
+  const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+  notes.forEach((f, i) => {
+    setTimeout(() => playTone(f, 'sine', 0.18, 0.18), i * 60);
+  });
+}
+
+/* ═══════════════════════════════════════
+   UI
+═══════════════════════════════════════ */
+function selectAlgo(name) {
+  if (running) return;
+  currentAlgo = name;
+  document.querySelectorAll('.algo-card').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-algo="${name}"]`).classList.add('active');
+
+  // show panel
+  const panel = document.getElementById('main-panel');
+  panel.classList.remove('visible');
+  void panel.offsetWidth; // reflow
+  panel.classList.add('visible');
+
+  updateDesc();
+  renderCode();
+  generateArray();
+}
+
+function onSizeChange(v) {
+  document.getElementById('size-val').textContent = v;
+  if (!running) generateArray();
+}
+
+function onSpeedChange(v) {
+  currentSpeed = +v;
+  document.getElementById('speed-val').textContent = speedLabel[v];
+}
+
+function updateDesc() {
+  const a = ALGOS[currentAlgo];
+  document.getElementById('desc-badge').textContent = a.badge;
+  document.getElementById('desc-title').textContent = a.name;
+  document.getElementById('desc-text').textContent = a.desc;
+  document.getElementById('c-best').textContent = a.best;
+  document.getElementById('c-avg').textContent = a.avg;
+  document.getElementById('c-worst').textContent = a.worst;
+}
+
+/* ═══════════════════════════════════════
+   CODE RENDERER
+═══════════════════════════════════════ */
+function renderCode(activeLine = -1) {
+  const a = ALGOS[currentAlgo];
+  document.getElementById('code-filename').textContent = a.filename;
+  const body = document.getElementById('code-body');
+  body.innerHTML = a.code.map((line, i) => {
+    const isActive = i === activeLine;
+    const html = syntaxHighlight(line.text);
+    return `<div class="code-line${isActive ? ' active' : ''}" data-line="${i}">
+      <span class="line-num">${i + 1}</span>
+      <span class="line-code">${html}</span>
+    </div>`;
+  }).join('');
+
+  if (activeLine >= 0) {
+    const el = body.querySelector(`[data-line="${activeLine}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function syntaxHighlight(text) {
+  if (!text.trim()) return '&nbsp;';
+  const kws = ['def', 'for', 'while', 'if', 'else', 'elif', 'return', 'and', 'or', 'not', 'in', 'range', 'True', 'False', 'None', 'break'];
+  let s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // comments
+  s = s.replace(/(#.*)$/, '<span class="cm">$1</span>');
+  if (!s.includes('<span class="cm">')) {
+    // strings
+    s = s.replace(/(["'].*?["'])/g, '<span class="st">$1</span>');
+    // keywords
+    kws.forEach(k => {
+      s = s.replace(new RegExp(`\\b(${k})\\b`, 'g'), '<span class="kw">$1</span>');
+    });
+    // numbers
+    s = s.replace(/\b(\d+)\b/g, '<span class="nm">$1</span>');
+    // function names
+    s = s.replace(/\b([a-z_][a-z0-9_]*)\s*(?=\()/g, '<span class="fn">$1</span>');
+  }
+  return s;
+}
+
+/* ═══════════════════════════════════════
+   ARRAY GENERATION
+═══════════════════════════════════════ */
+function generateArray() {
+  const n = +document.getElementById('size-slider').value;
+  array = Array.from({ length: n }, () => Math.floor(Math.random() * 95) + 5);
+  resetStats();
+  renderBars(array, []);
+  renderCode(-1);
+  setStatus('idle');
+}
+
+function shuffleArray() {
+  if (running) return;
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  resetStats();
+  renderBars(array, []);
+  renderCode(-1);
+  setStatus('idle');
+}
+
+/* ═══════════════════════════════════════
+   BAR RENDERER
+═══════════════════════════════════════ */
+function renderBars(arr, highlights) {
+  const container = document.getElementById('bars-container');
+  const maxVal = Math.max(...arr);
+  // highlights: [{idx, type}]   type: compare|swap|pivot|sorted
+  const map = {};
+  highlights.forEach(h => map[h.idx] = h.type);
+
+  container.innerHTML = arr.map((v, i) => {
+    const pct = (v / maxVal) * 100;
+    const cls = map[i] ? ` ${map[i]}` : '';
+    return `<div class="bar${cls}" style="height:${pct}%" title="${v}"></div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   STATS
+═══════════════════════════════════════ */
+function resetStats() {
+  comparisons = 0; swaps = 0;
+  document.getElementById('stat-comparisons').textContent = '0';
+  document.getElementById('stat-swaps').textContent = '0';
+  document.getElementById('stat-time').textContent = '—';
+}
+
+function updateStats(c, s) {
+  document.getElementById('stat-comparisons').textContent = c;
+  document.getElementById('stat-swaps').textContent = s;
+}
+
+function setStatus(state) {
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (state === 'running' ? ' running' : state === 'done' ? ' done' : '');
+}
+
+/* ═══════════════════════════════════════
+   RUN / STOP
+═══════════════════════════════════════ */
+async function runSort() {
+  if (!currentAlgo || running) return;
+  stopFlag = false; running = true;
+
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('stop-btn').disabled = false;
+  document.getElementById('shuffle-btn').disabled = true;
+  document.getElementById('size-slider').disabled = true;
+  setStatus('running');
+
+  const arr = [...array];
+  const stepsArr = [];
+  let cmp = 0, swp = 0;
+
+  // Build steps
+  function step(arrState, highlights, line, c, s, type='') {
+    stepsArr.push({ arr: [...arrState], highlights, line, c, s, type });
+  }
+
+  if (currentAlgo === 'bubble')    buildBubble(arr, step, cmp, swp);
+  if (currentAlgo === 'selection') buildSelection(arr, step, cmp, swp);
+  if (currentAlgo === 'insertion') buildInsertion(arr, step, cmp, swp);
+  if (currentAlgo === 'merge')     buildMerge(arr, step);
+  if (currentAlgo === 'quick')     buildQuick(arr, step);
+
+  startTime = performance.now();
+
+  for (let i = 0; i < stepsArr.length && !stopFlag; i++) {
+    const s = stepsArr[i];
+    renderBars(s.arr, s.highlights);
+    renderCode(s.line);
+    updateStats(s.c, s.s);
+
+    // audio
+    const compareH = s.highlights.find(h => h.type === 'compare');
+    const swapH    = s.highlights.find(h => h.type === 'swap');
+    if (compareH !== undefined) {
+      const freq = barFreq(s.arr[compareH.idx], Math.max(...s.arr));
+      playTone(freq, 'triangle', 0.06, 0.08);
+    }
+    if (swapH !== undefined) {
+      const freq = barFreq(s.arr[swapH.idx], Math.max(...s.arr));
+      playTone(freq, 'sawtooth', 0.08, 0.1);
+    }
+
+    await sleep(speedMap[currentSpeed]);
+  }
+
+  if (!stopFlag) {
+    // Final: mark all sorted
+    const finalArr = stepsArr.length ? stepsArr[stepsArr.length - 1].arr : arr;
+    array = finalArr;
+    const elapsed = Math.round(performance.now() - startTime);
+    document.getElementById('stat-time').textContent = elapsed;
+
+    // sweep green
+    for (let i = 0; i < finalArr.length && !stopFlag; i++) {
+      const h = Array.from({length: i+1}, (_,k) => ({ idx: k, type: 'sorted' }));
+      renderBars(finalArr, h);
+      playTone(barFreq(finalArr[i], Math.max(...finalArr)), 'sine', 0.08, 0.12);
+      await sleep(30);
+    }
+    renderBars(finalArr, finalArr.map((_,k)=>({idx:k,type:'sorted'})));
+    playSuccessFanfare(finalArr.length);
+    setStatus('done');
+    renderCode(-1);
+  } else {
+    setStatus('idle');
+    renderCode(-1);
+  }
+
+  running = false;
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('stop-btn').disabled = true;
+  document.getElementById('shuffle-btn').disabled = false;
+  document.getElementById('size-slider').disabled = false;
+}
+
+function stopSort() { stopFlag = true; }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ═══════════════════════════════════════
+   STEP BUILDERS
+═══════════════════════════════════════ */
+
+function buildBubble(arr, step) {
+  const n = arr.length;
+  let c = 0, s = 0;
+  const sorted = new Set();
+
+  for (let i = 0; i < n; i++) {
+    step(arr, [], 2, c, s);
+    let swapped = false;
+    step(arr, [], 3, c, s);
+    for (let j = 0; j < n - i - 1; j++) {
+      step(arr, [{idx:j,type:'compare'},{idx:j+1,type:'compare'}], 4, c, s);
+      c++;
+      if (arr[j] > arr[j + 1]) {
+        step(arr, [{idx:j,type:'swap'},{idx:j+1,type:'swap'}], 6, c, s);
+        [arr[j], arr[j+1]] = [arr[j+1], arr[j]]; s++;
+        step(arr, [{idx:j,type:'swap'},{idx:j+1,type:'swap'}], 6, c, s);
+        swapped = true;
+        step(arr, [], 7, c, s);
+      }
+    }
+    sorted.add(n - i - 1);
+    step(arr, [...sorted].map(k=>({idx:k,type:'sorted'})), 8, c, s);
+    if (!swapped) {
+      step(arr, [], 9, c, s);
+      break;
+    }
+  }
+  step(arr, [], 10, c, s);
+}
+
+function buildSelection(arr, step) {
+  const n = arr.length;
+  let c = 0, s = 0;
+  const sorted = new Set();
+
+  for (let i = 0; i < n; i++) {
+    step(arr, [], 2, c, s);
+    let minIdx = i;
+    step(arr, [{idx:minIdx,type:'pivot'}], 3, c, s);
+    for (let j = i + 1; j < n; j++) {
+      step(arr, [{idx:j,type:'compare'},{idx:minIdx,type:'pivot'}], 4, c, s);
+      c++;
+      if (arr[j] < arr[minIdx]) {
+        minIdx = j;
+        step(arr, [{idx:minIdx,type:'pivot'}], 6, c, s);
+      }
+    }
+    step(arr, [{idx:i,type:'compare'},{idx:minIdx,type:'swap'}], 7, c, s);
+    if (minIdx !== i) {
+      [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]]; s++;
+      step(arr, [{idx:i,type:'sorted'}], 8, c, s);
+    }
+    sorted.add(i);
+    step(arr, [...sorted].map(k=>({idx:k,type:'sorted'})), 8, c, s);
+  }
+  step(arr, [], 9, c, s);
+}
+
+function buildInsertion(arr, step) {
+  const n = arr.length;
+  let c = 0, s = 0;
+
+  step(arr, [{idx:0,type:'sorted'}], 0, c, s);
+  for (let i = 1; i < n; i++) {
+    step(arr, [{idx:i,type:'compare'}], 2, c, s);
+    const key = arr[i];
+    step(arr, [{idx:i,type:'pivot'}], 3, c, s);
+    let j = i - 1;
+    step(arr, [], 4, c, s);
+    while (j >= 0 && arr[j] > key) {
+      step(arr, [{idx:j,type:'compare'},{idx:j+1,type:'swap'}], 5, c, s);
+      c++;
+      arr[j + 1] = arr[j]; s++;
+      step(arr, [{idx:j+1,type:'swap'}], 6, c, s);
+      j--;
+      step(arr, [], 7, c, s);
+    }
+    if (j >= 0) { c++; } // for the failed while check
+    arr[j + 1] = key;
+    step(arr, [{idx:j+1,type:'sorted'}], 8, c, s);
+  }
+  step(arr, [], 9, c, s);
+}
+
+function buildMerge(arr, step) {
+  let c = 0, s = 0;
+
+  function mergeSort(a, offset) {
+    step(a, [], 1, c, s);
+    if (a.length <= 1) return a;
+    const mid = Math.floor(a.length / 2);
+    step(a, [], 3, c, s);
+    const left  = mergeSort(a.slice(0, mid), offset);
+    step(a, [], 4, c, s);
+    const right = mergeSort(a.slice(mid), offset + mid);
+    step(a, [], 5, c, s);
+    return merge(left, right, offset);
+  }
+
+  function merge(left, right, offset) {
+    const result = [];
+    let i = 0, j = 0;
+    step([...arr], [], 9, c, s);
+    while (i < left.length && j < right.length) {
+      step([...arr], [
+        {idx: offset + i, type: 'compare'},
+        {idx: offset + left.length + j, type: 'compare'}
+      ], 11, c, s);
+      c++;
+      if (left[i] <= right[j]) {
+        result.push(left[i++]); s++;
+        step([...arr], [{idx: offset + result.length - 1, type: 'swap'}], 12, c, s);
+      } else {
+        result.push(right[j++]); s++;
+        step([...arr], [{idx: offset + result.length - 1, type: 'swap'}], 15, c, s);
+      }
+      // write back
+      for (let k = 0; k < result.length; k++) arr[offset + k] = result[k];
+    }
+    const remainder = [...left.slice(i), ...right.slice(j)];
+    for (let k = 0; k < remainder.length; k++) {
+      result.push(remainder[k]);
+      arr[offset + result.length - 1] = remainder[k]; s++;
+    }
+    step([...arr], [], 17, c, s);
+    return result;
+  }
+
+  mergeSort([...arr], 0);
+  step(arr, [], 20, c, s);
+}
+
+function buildQuick(arr, step) {
+  let c = 0, s = 0;
+
+  function partition(low, high) {
+    const pivot = arr[high];
+    step([...arr], [{idx:high,type:'pivot'}], 10, c, s);
+    let i = low - 1;
+    for (let j = low; j < high; j++) {
+      step([...arr], [{idx:j,type:'compare'},{idx:high,type:'pivot'}], 12, c, s);
+      c++;
+      if (arr[j] <= pivot) {
+        i++;
+        step([...arr], [{idx:i,type:'swap'},{idx:j,type:'swap'},{idx:high,type:'pivot'}], 14, c, s);
+        [arr[i], arr[j]] = [arr[j], arr[i]]; s++;
+        step([...arr], [{idx:i,type:'swap'},{idx:j,type:'swap'}], 14, c, s);
+      }
+    }
+    step([...arr], [{idx:i+1,type:'swap'},{idx:high,type:'pivot'}], 15, c, s);
+    [arr[i+1], arr[high]] = [arr[high], arr[i+1]]; s++;
+    step([...arr], [{idx:i+1,type:'sorted'}], 15, c, s);
+    return i + 1;
+  }
+
+  function quickSort(low, high) {
+    step([...arr], [], 3, c, s);
+    if (low < high) {
+      const pi = partition(low, high);
+      step([...arr], [{idx:pi,type:'sorted'}], 4, c, s);
+      quickSort(low, pi - 1);
+      quickSort(pi + 1, high);
+    }
+  }
+
+  quickSort(0, arr.length - 1);
+  step(arr, [], 7, c, s);
+}
+
+/* ═══════════════════════════════════════
+   BOOT
+═══════════════════════════════════════ */
+// Select bubble by default on load for quick start (optional)
+// selectAlgo('bubble');
+</script>
+</body>
+</html>

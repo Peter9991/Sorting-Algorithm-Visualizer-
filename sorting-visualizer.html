@@ -8,22 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f2ec;
-    --surface: #ffffff;
-    --surface2: #ede9e0;
-    --border: #d8d2c6;
+    --bg: #e2ddd6;
+    --surface: #ede9e2;
+    --surface2: #d8d2c8;
+    --border: #c0b8ac;
     --accent: #c0392b;
     --accent2: #2c7a7b;
     --accent3: #d97706;
     --green: #2d6a4f;
     --red: #c0392b;
     --text: #1a1612;
-    --muted: #8a8070;
-    --bar-default: #c8bfb0;
+    --muted: #7a7060;
+    --bar-default: #b0a898;
     --bar-compare: #c0392b;
     --bar-swap: #d97706;
     --bar-sorted: #2d6a4f;
-    --bar-pivot: #7c3aed;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,9 +50,9 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 15% 10%, rgba(192,57,43,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 85% 80%, rgba(44,122,123,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(217,119,6,0.04) 0%, transparent 60%);
+      radial-gradient(ellipse 60% 50% at 15% 10%, rgba(192,57,43,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 85% 80%, rgba(44,122,123,0.11) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(217,119,6,0.06) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
   }
@@ -378,10 +377,13 @@
   /* ── VISUALIZER + CODE SPLIT ── */
   .split-view {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 420px;
     gap: 20px;
   }
 
+  @media (max-width: 1100px) {
+    .split-view { grid-template-columns: 1fr 340px; }
+  }
   @media (max-width: 900px) {
     .split-view { grid-template-columns: 1fr; }
   }
@@ -450,7 +452,6 @@
   .bar.compare { background: var(--bar-compare); box-shadow: 0 0 10px rgba(192,57,43,0.4); }
   .bar.swap    { background: var(--bar-swap);    box-shadow: 0 0 10px rgba(217,119,6,0.4); }
   .bar.sorted  { background: var(--bar-sorted);  box-shadow: 0 0 10px rgba(45,106,79,0.35); }
-  .bar.pivot   { background: var(--bar-pivot);   box-shadow: 0 0 10px rgba(124,58,237,0.45); }
 
   /* ── STATS ── */
   .stats-row {
@@ -516,20 +517,22 @@
 
   .code-body {
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
     padding: 16px 0;
-    max-height: 360px;
+    max-height: 400px;
   }
 
   .code-line {
     display: flex;
     gap: 0;
     font-family: 'Space Mono', monospace;
-    font-size: 12px;
+    font-size: 10.5px;
     line-height: 22px;
     padding: 1px 0;
     transition: background 0.2s;
     position: relative;
+    white-space: nowrap;
   }
   .code-line.active {
     background: rgba(192,57,43,0.08);
@@ -591,10 +594,11 @@
   .desc-title {
     font-family: 'Fraunces', serif;
     font-size: 26px;
-    font-weight: 700;
+    font-weight: 900;
     margin-bottom: 12px;
     color: var(--text);
-    font-style: italic;
+    font-style: normal;
+    letter-spacing: -0.01em;
   }
 
   .desc-text {
@@ -782,7 +786,6 @@
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div>Compare</div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--bar-swap)"></div>Swap</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-pivot)"></div>Pivot</div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div>Sorted</div>
           </div>
         </div>
@@ -841,117 +844,117 @@
 const ALGOS = {
   bubble: {
     name: 'Bubble Sort',
-    badge: 'Comparison-Based · Stable',
-    desc: 'Bubble Sort repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. Each pass bubbles the largest unsorted element to its correct position at the end of the array.',
+    badge: 'Comparison-Based · O(n²)',
+    desc: 'Bubble Sort is one of the simplest sorting algorithms. It works by repeatedly walking through the array and comparing two neighboring elements side by side — if the left one is bigger than the right one, they swap places. After each full pass, the largest unsorted element "bubbles up" to its final position at the end. The algorithm stops early if a full pass happens with zero swaps, meaning the array is already sorted. It is easy to understand but slow on large arrays.',
     best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)',
     filename: 'bubble_sort.py',
     code: [
-      { text: 'def bubble_sort(arr):', tags: 'fn' },
-      { text: '    n = len(arr)', tags: '' },
-      { text: '    for i in range(n):',              tags: 'kw',   id: 'outer' },
-      { text: '        swapped = False',             tags: '',     id: 'init_swap' },
-      { text: '        for j in range(n - i - 1):', tags: 'kw',   id: 'inner' },
-      { text: '            if arr[j] > arr[j+1]:',  tags: 'kw',   id: 'compare' },
-      { text: '                arr[j], arr[j+1] = arr[j+1], arr[j]', tags: '', id: 'swap' },
-      { text: '                swapped = True',      tags: '',     id: 'mark_swap' },
-      { text: '        if not swapped:', tags: 'kw', id: 'early_exit' },
-      { text: '            break  # already sorted', tags: 'cm', id: 'break' },
-      { text: '    return arr', tags: 'kw', id: 'return' },
+      { text: 'def bubble_sort(arr):' },
+      { text: '    n = len(arr)' },
+      { text: '    for i in range(n):',               id: 'outer' },
+      { text: '        swapped = False',               id: 'init_swap' },
+      { text: '        for j in range(n - i - 1):',   id: 'inner' },
+      { text: '            if arr[j] > arr[j+1]:',    id: 'compare' },
+      { text: '                arr[j], arr[j+1] = arr[j+1], arr[j]', id: 'swap' },
+      { text: '                swapped = True',        id: 'mark_swap' },
+      { text: '        if not swapped:',               id: 'early_exit' },
+      { text: '            break  # already sorted',  id: 'break', cm: true },
+      { text: '    return arr' },
     ]
   },
   selection: {
     name: 'Selection Sort',
-    badge: 'In-Place · Not Stable',
-    desc: 'Selection Sort divides the array into sorted and unsorted portions. In each pass, it finds the minimum element in the unsorted portion and places it at the beginning, gradually building up the sorted portion from left to right.',
+    badge: 'In-Place · O(n²)',
+    desc: 'Selection Sort divides the array into two parts: a sorted region on the left and an unsorted region on the right. In each pass, it scans the entire unsorted region to find the smallest element, then moves it to the end of the sorted region with a single swap. This repeats until every element is in its correct position. It always makes exactly n−1 swaps no matter what, which makes it predictable but not efficient for large data.',
     best: 'O(n²)', avg: 'O(n²)', worst: 'O(n²)',
     filename: 'selection_sort.py',
     code: [
-      { text: 'def selection_sort(arr):',             tags: 'fn' },
-      { text: '    n = len(arr)',                     tags: '' },
-      { text: '    for i in range(n):',               tags: 'kw', id: 'outer' },
-      { text: '        min_idx = i',                  tags: '',   id: 'min_init' },
-      { text: '        for j in range(i+1, n):',      tags: 'kw', id: 'inner' },
-      { text: '            if arr[j] < arr[min_idx]:', tags: 'kw', id: 'compare' },
-      { text: '                min_idx = j',          tags: '',   id: 'update_min' },
-      { text: '        if min_idx != i:',             tags: 'kw', id: 'check' },
-      { text: '            arr[i], arr[min_idx] = arr[min_idx], arr[i]', tags: '', id: 'swap' },
-      { text: '    return arr',                       tags: 'kw', id: 'return' },
+      { text: 'def selection_sort(arr):' },
+      { text: '    n = len(arr)' },
+      { text: '    for i in range(n):',                id: 'outer' },
+      { text: '        min_idx = i',                   id: 'min_init' },
+      { text: '        for j in range(i+1, n):',       id: 'inner' },
+      { text: '            if arr[j] < arr[min_idx]:', id: 'compare' },
+      { text: '                min_idx = j',           id: 'update_min' },
+      { text: '        if min_idx != i:',              id: 'check' },
+      { text: '            arr[i], arr[min_idx] = arr[min_idx], arr[i]', id: 'swap' },
+      { text: '    return arr' },
     ]
   },
   insertion: {
     name: 'Insertion Sort',
-    badge: 'Adaptive · Stable',
-    desc: 'Insertion Sort builds the sorted array one element at a time. It picks each element and inserts it into its correct position among the already-sorted elements, shifting larger elements one step to the right to make room.',
+    badge: 'Adaptive · O(n²)',
+    desc: 'Insertion Sort works the way most people sort a hand of playing cards. It picks each element one at a time and slides it leftward into the correct position among the elements already sorted. Larger elements shift one step to the right to make room. It is very efficient when the array is nearly sorted or has only a few elements out of place, and it is one of the fastest O(n²) algorithms in those cases.',
     best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)',
     filename: 'insertion_sort.py',
     code: [
-      { text: 'def insertion_sort(arr):',     tags: 'fn' },
-      { text: '    n = len(arr)',              tags: '' },
-      { text: '    for i in range(1, n):',    tags: 'kw', id: 'outer' },
-      { text: '        key = arr[i]',         tags: '',   id: 'key' },
-      { text: '        j = i - 1',            tags: '',   id: 'j_init' },
-      { text: '        while j >= 0 and arr[j] > key:', tags: 'kw', id: 'while' },
-      { text: '            arr[j+1] = arr[j]', tags: '', id: 'shift' },
-      { text: '            j -= 1',           tags: '',   id: 'j_dec' },
-      { text: '        arr[j+1] = key',       tags: '',   id: 'place' },
-      { text: '    return arr',               tags: 'kw', id: 'return' },
+      { text: 'def insertion_sort(arr):' },
+      { text: '    n = len(arr)' },
+      { text: '    for i in range(1, n):',             id: 'outer' },
+      { text: '        key = arr[i]',                  id: 'key' },
+      { text: '        j = i - 1',                     id: 'j_init' },
+      { text: '        while j >= 0 and arr[j] > key:', id: 'while' },
+      { text: '            arr[j+1] = arr[j]',         id: 'shift' },
+      { text: '            j -= 1',                    id: 'j_dec' },
+      { text: '        arr[j+1] = key',                id: 'place' },
+      { text: '    return arr' },
     ]
   },
   merge: {
     name: 'Merge Sort',
-    badge: 'Divide & Conquer · Stable',
-    desc: 'Merge Sort is a divide-and-conquer algorithm. It splits the array in half, recursively sorts both halves, then merges them back together in sorted order. It guarantees O(n log n) performance at the cost of extra memory.',
+    badge: 'Divide & Conquer · O(n log n)',
+    desc: 'Merge Sort uses a divide-and-conquer strategy. It keeps splitting the array in half until each piece has only one element (a single element is always sorted). Then it merges pairs of pieces back together in sorted order, comparing elements from each half one by one and placing the smaller one first. This merge step is where the real work happens. It is guaranteed to run in O(n log n) time regardless of the input, making it reliable and efficient for large datasets.',
     best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)',
     filename: 'merge_sort.py',
     code: [
-      { text: 'def merge_sort(arr):',                       tags: 'fn' },
-      { text: '    if len(arr) <= 1:',                      tags: 'kw', id: 'base' },
-      { text: '        return arr',                         tags: 'kw' },
-      { text: '    mid = len(arr) // 2',                    tags: '',   id: 'mid' },
-      { text: '    left  = merge_sort(arr[:mid])',          tags: '',   id: 'rec_left' },
-      { text: '    right = merge_sort(arr[mid:])',          tags: '',   id: 'rec_right' },
-      { text: '    return merge(left, right)',              tags: 'kw', id: 'merge_call' },
-      { text: '',                                           tags: '' },
-      { text: 'def merge(left, right):',                   tags: 'fn' },
-      { text: '    result = []',                           tags: '',   id: 'init_res' },
-      { text: '    i = j = 0',                             tags: '',   id: 'pointers' },
-      { text: '    while i < len(left) and j < len(right):', tags: 'kw', id: 'while' },
-      { text: '        if left[i] <= right[j]:',           tags: 'kw', id: 'compare' },
-      { text: '            result.append(left[i])',        tags: '',   id: 'append_left' },
-      { text: '            i += 1',                        tags: '' },
-      { text: '        else:',                             tags: 'kw' },
-      { text: '            result.append(right[j])',       tags: '',   id: 'append_right' },
-      { text: '            j += 1',                        tags: '' },
-      { text: '    result += left[i:]',                   tags: '',   id: 'remainder' },
-      { text: '    result += right[j:]',                  tags: '' },
-      { text: '    return result',                         tags: 'kw', id: 'return' },
+      { text: 'def merge_sort(arr):' },
+      { text: '    if len(arr) <= 1:',                 id: 'base' },
+      { text: '        return arr' },
+      { text: '    mid = len(arr) // 2',               id: 'mid' },
+      { text: '    left  = merge_sort(arr[:mid])',     id: 'rec_left' },
+      { text: '    right = merge_sort(arr[mid:])',     id: 'rec_right' },
+      { text: '    return merge(left, right)',         id: 'merge_call' },
+      { text: '' },
+      { text: 'def merge(left, right):' },
+      { text: '    result = []',                       id: 'init_res' },
+      { text: '    i = j = 0',                         id: 'pointers' },
+      { text: '    while i < len(left) and j < len(right):', id: 'while' },
+      { text: '        if left[i] <= right[j]:',       id: 'compare' },
+      { text: '            result.append(left[i])' },
+      { text: '            i += 1' },
+      { text: '        else:' },
+      { text: '            result.append(right[j])' },
+      { text: '            j += 1' },
+      { text: '    result += left[i:]',                id: 'remainder' },
+      { text: '    result += right[j:]' },
+      { text: '    return result' },
     ]
   },
   quick: {
     name: 'Quick Sort',
-    badge: 'Divide & Conquer · Not Stable',
-    desc: 'Quick Sort picks a pivot element and partitions the array around it, placing smaller elements before it and larger after. It then recursively sorts both partitions. With a good pivot, it is one of the fastest sorting algorithms in practice.',
+    badge: 'Divide & Conquer · O(n log n) avg',
+    desc: 'Quick Sort picks a pivot element (the last element here) and rearranges the array so every element smaller than the pivot ends up on its left and every larger element on its right. The pivot then lands in its final sorted position. The algorithm then recurses on the left and right sub-arrays. It is one of the fastest sorting algorithms in practice because it sorts in-place with very low overhead, though a bad pivot choice can degrade it to O(n²) in the worst case.',
     best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)',
     filename: 'quick_sort.py',
     code: [
-      { text: 'def quick_sort(arr, low=0, high=None):',   tags: 'fn' },
-      { text: '    if high is None:',                     tags: 'kw' },
-      { text: '        high = len(arr) - 1',              tags: '' },
-      { text: '    if low < high:',                       tags: 'kw', id: 'base' },
-      { text: '        pi = partition(arr, low, high)',   tags: '',   id: 'partition_call' },
-      { text: '        quick_sort(arr, low, pi - 1)',     tags: '',   id: 'rec_left' },
-      { text: '        quick_sort(arr, pi + 1, high)',    tags: '',   id: 'rec_right' },
-      { text: '    return arr',                           tags: 'kw', id: 'return' },
-      { text: '',                                         tags: '' },
-      { text: 'def partition(arr, low, high):',           tags: 'fn' },
-      { text: '    pivot = arr[high]',                    tags: '',   id: 'pivot' },
-      { text: '    i = low - 1',                         tags: '' },
-      { text: '    for j in range(low, high):',          tags: 'kw', id: 'loop' },
-      { text: '        if arr[j] <= pivot:',             tags: 'kw', id: 'compare' },
-      { text: '            i += 1',                      tags: '' },
-      { text: '            arr[i], arr[j] = arr[j], arr[i]', tags: '', id: 'swap' },
-      { text: '    arr[i+1], arr[high] = arr[high], arr[i+1]', tags: '', id: 'place_pivot' },
-      { text: '    return i + 1',                        tags: 'kw', id: 'ret_pi' },
+      { text: 'def quick_sort(arr, low=0, high=None):' },
+      { text: '    if high is None:' },
+      { text: '        high = len(arr) - 1' },
+      { text: '    if low < high:',                    id: 'base' },
+      { text: '        pi = partition(arr, low, high)', id: 'partition_call' },
+      { text: '        quick_sort(arr, low, pi - 1)',  id: 'rec_left' },
+      { text: '        quick_sort(arr, pi + 1, high)', id: 'rec_right' },
+      { text: '    return arr' },
+      { text: '' },
+      { text: 'def partition(arr, low, high):' },
+      { text: '    pivot = arr[high]',                 id: 'pivot' },
+      { text: '    i = low - 1' },
+      { text: '    for j in range(low, high):',        id: 'loop' },
+      { text: '        if arr[j] <= pivot:',           id: 'compare' },
+      { text: '            i += 1' },
+      { text: '            arr[i], arr[j] = arr[j], arr[i]', id: 'swap' },
+      { text: '    arr[i+1], arr[high] = arr[high], arr[i+1]', id: 'place_pivot' },
+      { text: '    return i + 1' },
     ]
   }
 };
@@ -974,14 +977,27 @@ const speedLabel = { 1: 'Slowest', 2: 'Slow', 3: 'Medium', 4: 'Fast', 5: 'Fastes
 let currentSpeed = 3;
 
 /* ═══════════════════════════════════════
-   INIT AUDIO
+   AUDIO — pentatonic scale mapped to bar height
 ═══════════════════════════════════════ */
+// C major pentatonic: C4 D4 E4 G4 A4 C5 D5 E5 G5 A5 C6 ...
+const PENTATONIC = [
+  261.63, 293.66, 329.63, 392.00, 440.00,   // C4 D4 E4 G4 A4
+  523.25, 587.33, 659.25, 783.99, 880.00,   // C5 D5 E5 G5 A5
+  1046.50, 1174.66, 1318.51                  // C6 D6 E6
+];
+
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
 }
 
-function playTone(freq, type = 'triangle', duration = 0.1, vol = 0.15) {
+// Map a bar value (1–100) to a pentatonic note frequency
+function valToNote(val, max) {
+  const idx = Math.round((val / max) * (PENTATONIC.length - 1));
+  return PENTATONIC[Math.max(0, Math.min(idx, PENTATONIC.length - 1))];
+}
+
+function playTone(freq, type = 'sine', duration = 0.12, vol = 0.18) {
   try {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
@@ -995,14 +1011,11 @@ function playTone(freq, type = 'triangle', duration = 0.1, vol = 0.15) {
   } catch(e) {}
 }
 
-function barFreq(val, max) {
-  return 180 + (val / max) * 900;
-}
-
-function playSuccessFanfare(n) {
-  const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
-  notes.forEach((f, i) => {
-    setTimeout(() => playTone(f, 'sine', 0.18, 0.18), i * 60);
+// Play a proper ascending C major arpeggio for the done fanfare
+function playSuccessFanfare() {
+  const chord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C major arpeggio
+  chord.forEach((f, i) => {
+    setTimeout(() => playTone(f, 'sine', 0.22, 0.16), i * 70);
   });
 }
 
@@ -1055,7 +1068,7 @@ function renderCode(activeLine = -1) {
   const body = document.getElementById('code-body');
   body.innerHTML = a.code.map((line, i) => {
     const isActive = i === activeLine;
-    const html = syntaxHighlight(line.text);
+    const html = syntaxHighlight(line.text, line.cm);
     return `<div class="code-line${isActive ? ' active' : ''}" data-line="${i}">
       <span class="line-num">${i + 1}</span>
       <span class="line-code">${html}</span>
@@ -1068,22 +1081,19 @@ function renderCode(activeLine = -1) {
   }
 }
 
-function syntaxHighlight(text) {
-  if (!text.trim()) return '&nbsp;';
-  const kws = ['def', 'for', 'while', 'if', 'else', 'elif', 'return', 'and', 'or', 'not', 'in', 'range', 'True', 'False', 'None', 'break'];
+function syntaxHighlight(text, isComment) {
+  if (!text || !text.trim()) return '&nbsp;';
+  const kws = ['def', 'for', 'while', 'if', 'else', 'elif', 'return', 'and', 'or', 'not', 'in', 'range', 'True', 'False', 'None', 'break', 'len', 'append'];
   let s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // comments
+  if (isComment || s.trim().startsWith('#')) return `<span class="cm">${s}</span>`;
+  // inline comments
   s = s.replace(/(#.*)$/, '<span class="cm">$1</span>');
   if (!s.includes('<span class="cm">')) {
-    // strings
     s = s.replace(/(["'].*?["'])/g, '<span class="st">$1</span>');
-    // keywords
     kws.forEach(k => {
       s = s.replace(new RegExp(`\\b(${k})\\b`, 'g'), '<span class="kw">$1</span>');
     });
-    // numbers
     s = s.replace(/\b(\d+)\b/g, '<span class="nm">$1</span>');
-    // function names
     s = s.replace(/\b([a-z_][a-z0-9_]*)\s*(?=\()/g, '<span class="fn">$1</span>');
   }
   return s;
@@ -1119,7 +1129,7 @@ function shuffleArray() {
 function renderBars(arr, highlights) {
   const container = document.getElementById('bars-container');
   const maxVal = Math.max(...arr);
-  // highlights: [{idx, type}]   type: compare|swap|pivot|sorted
+  // highlights: [{idx, type}]   type: compare|swap|sorted
   const map = {};
   highlights.forEach(h => map[h.idx] = h.type);
 
@@ -1189,13 +1199,12 @@ async function runSort() {
     // audio
     const compareH = s.highlights.find(h => h.type === 'compare');
     const swapH    = s.highlights.find(h => h.type === 'swap');
+    const maxVal   = Math.max(...s.arr);
     if (compareH !== undefined) {
-      const freq = barFreq(s.arr[compareH.idx], Math.max(...s.arr));
-      playTone(freq, 'triangle', 0.06, 0.08);
+      playTone(valToNote(s.arr[compareH.idx], maxVal), 'sine', 0.09, 0.1);
     }
     if (swapH !== undefined) {
-      const freq = barFreq(s.arr[swapH.idx], Math.max(...s.arr));
-      playTone(freq, 'sawtooth', 0.08, 0.1);
+      playTone(valToNote(s.arr[swapH.idx], maxVal), 'triangle', 0.12, 0.13);
     }
 
     await sleep(speedMap[currentSpeed]);
@@ -1212,11 +1221,11 @@ async function runSort() {
     for (let i = 0; i < finalArr.length && !stopFlag; i++) {
       const h = Array.from({length: i+1}, (_,k) => ({ idx: k, type: 'sorted' }));
       renderBars(finalArr, h);
-      playTone(barFreq(finalArr[i], Math.max(...finalArr)), 'sine', 0.08, 0.12);
+      playTone(valToNote(finalArr[i], Math.max(...finalArr)), 'sine', 0.1, 0.14);
       await sleep(30);
     }
     renderBars(finalArr, finalArr.map((_,k)=>({idx:k,type:'sorted'})));
-    playSuccessFanfare(finalArr.length);
+    playSuccessFanfare();
     setStatus('done');
     renderCode(-1);
   } else {
@@ -1277,13 +1286,13 @@ function buildSelection(arr, step) {
   for (let i = 0; i < n; i++) {
     step(arr, [], 2, c, s);
     let minIdx = i;
-    step(arr, [{idx:minIdx,type:'pivot'}], 3, c, s);
+    step(arr, [{idx:minIdx,type:'compare'}], 3, c, s);
     for (let j = i + 1; j < n; j++) {
-      step(arr, [{idx:j,type:'compare'},{idx:minIdx,type:'pivot'}], 4, c, s);
+      step(arr, [{idx:j,type:'compare'},{idx:minIdx,type:'compare'}], 4, c, s);
       c++;
       if (arr[j] < arr[minIdx]) {
         minIdx = j;
-        step(arr, [{idx:minIdx,type:'pivot'}], 6, c, s);
+        step(arr, [{idx:minIdx,type:'compare'}], 6, c, s);
       }
     }
     step(arr, [{idx:i,type:'compare'},{idx:minIdx,type:'swap'}], 7, c, s);
@@ -1305,7 +1314,7 @@ function buildInsertion(arr, step) {
   for (let i = 1; i < n; i++) {
     step(arr, [{idx:i,type:'compare'}], 2, c, s);
     const key = arr[i];
-    step(arr, [{idx:i,type:'pivot'}], 3, c, s);
+    step(arr, [{idx:i,type:'compare'}], 3, c, s);
     let j = i - 1;
     step(arr, [], 4, c, s);
     while (j >= 0 && arr[j] > key) {
@@ -1326,49 +1335,43 @@ function buildInsertion(arr, step) {
 function buildMerge(arr, step) {
   let c = 0, s = 0;
 
-  function mergeSort(a, offset) {
-    step(a, [], 1, c, s);
-    if (a.length <= 1) return a;
-    const mid = Math.floor(a.length / 2);
-    step(a, [], 3, c, s);
-    const left  = mergeSort(a.slice(0, mid), offset);
-    step(a, [], 4, c, s);
-    const right = mergeSort(a.slice(mid), offset + mid);
-    step(a, [], 5, c, s);
-    return merge(left, right, offset);
+  function mergeSort(offset, len) {
+    if (len <= 1) return;
+    const mid = Math.floor(len / 2);
+    // highlight the current sub-array being split
+    const subH = Array.from({length: len}, (_, k) => ({idx: offset + k, type: 'compare'}));
+    step([...arr], subH, 1, c, s);
+    mergeSort(offset, mid);
+    mergeSort(offset + mid, len - mid);
+    merge(offset, mid, len - mid);
   }
 
-  function merge(left, right, offset) {
-    const result = [];
-    let i = 0, j = 0;
+  function merge(offset, leftLen, rightLen) {
+    const left  = arr.slice(offset, offset + leftLen);
+    const right = arr.slice(offset + leftLen, offset + leftLen + rightLen);
+    let i = 0, j = 0, k = offset;
     step([...arr], [], 9, c, s);
     while (i < left.length && j < right.length) {
       step([...arr], [
         {idx: offset + i, type: 'compare'},
-        {idx: offset + left.length + j, type: 'compare'}
+        {idx: offset + leftLen + j, type: 'compare'}
       ], 11, c, s);
       c++;
       if (left[i] <= right[j]) {
-        result.push(left[i++]); s++;
-        step([...arr], [{idx: offset + result.length - 1, type: 'swap'}], 12, c, s);
+        arr[k++] = left[i++];
       } else {
-        result.push(right[j++]); s++;
-        step([...arr], [{idx: offset + result.length - 1, type: 'swap'}], 15, c, s);
+        arr[k++] = right[j++];
       }
-      // write back
-      for (let k = 0; k < result.length; k++) arr[offset + k] = result[k];
+      s++;
+      step([...arr], [{idx: k - 1, type: 'swap'}], 13, c, s);
     }
-    const remainder = [...left.slice(i), ...right.slice(j)];
-    for (let k = 0; k < remainder.length; k++) {
-      result.push(remainder[k]);
-      arr[offset + result.length - 1] = remainder[k]; s++;
-    }
-    step([...arr], [], 17, c, s);
-    return result;
+    while (i < left.length) { arr[k++] = left[i++]; s++; step([...arr], [{idx: k-1, type: 'swap'}], 17, c, s); }
+    while (j < right.length) { arr[k++] = right[j++]; s++; step([...arr], [{idx: k-1, type: 'swap'}], 17, c, s); }
+    step([...arr], [], 19, c, s);
   }
 
-  mergeSort([...arr], 0);
-  step(arr, [], 20, c, s);
+  mergeSort(0, arr.length);
+  step(arr, [], 6, c, s);
 }
 
 function buildQuick(arr, step) {
@@ -1376,19 +1379,20 @@ function buildQuick(arr, step) {
 
   function partition(low, high) {
     const pivot = arr[high];
-    step([...arr], [{idx:high,type:'pivot'}], 10, c, s);
+    // highlight the pivot element as a compare (no special pivot type)
+    step([...arr], [{idx:high, type:'compare'}], 10, c, s);
     let i = low - 1;
     for (let j = low; j < high; j++) {
-      step([...arr], [{idx:j,type:'compare'},{idx:high,type:'pivot'}], 12, c, s);
+      step([...arr], [{idx:j,type:'compare'},{idx:high,type:'compare'}], 12, c, s);
       c++;
       if (arr[j] <= pivot) {
         i++;
-        step([...arr], [{idx:i,type:'swap'},{idx:j,type:'swap'},{idx:high,type:'pivot'}], 14, c, s);
+        step([...arr], [{idx:i,type:'swap'},{idx:j,type:'swap'}], 14, c, s);
         [arr[i], arr[j]] = [arr[j], arr[i]]; s++;
         step([...arr], [{idx:i,type:'swap'},{idx:j,type:'swap'}], 14, c, s);
       }
     }
-    step([...arr], [{idx:i+1,type:'swap'},{idx:high,type:'pivot'}], 15, c, s);
+    step([...arr], [{idx:i+1,type:'swap'},{idx:high,type:'swap'}], 15, c, s);
     [arr[i+1], arr[high]] = [arr[high], arr[i+1]]; s++;
     step([...arr], [{idx:i+1,type:'sorted'}], 15, c, s);
     return i + 1;

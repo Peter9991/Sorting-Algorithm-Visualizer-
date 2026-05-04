@@ -445,7 +445,6 @@
     flex: 1;
     background: var(--bar-default);
     border-radius: 4px 4px 0 0;
-    transition: height 0.1s ease;
     position: relative;
     min-width: 4px;
   }
@@ -1075,10 +1074,36 @@ function renderCode(activeLine = -1) {
     </div>`;
   }).join('');
 
-  if (activeLine >= 0) {
-    const el = body.querySelector(`[data-line="${activeLine}"]`);
-    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (activeLine >= 0) scrollCodeLineIntoView(body, activeLine);
+}
+
+/** Update only the active line highlight (avoids rebuilding code HTML every step). */
+function highlightCodeLine(activeLine) {
+  const body = document.getElementById('code-body');
+  if (!body || !currentAlgo) return;
+  if (!body.querySelector('.code-line')) {
+    renderCode(activeLine);
+    return;
   }
+  body.querySelectorAll('.code-line.active').forEach((el) => el.classList.remove('active'));
+  if (activeLine < 0) return;
+  const el = body.querySelector(`[data-line="${activeLine}"]`);
+  if (!el) return;
+  el.classList.add('active');
+  scrollCodeLineIntoView(body, activeLine);
+}
+
+/** Scroll within the code panel only (no smooth scroll / no chaining to the page). */
+function scrollCodeLineIntoView(body, activeLine) {
+  const el = body.querySelector(`[data-line="${activeLine}"]`);
+  if (!el) return;
+  const br = body.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const dy = er.top + er.height / 2 - (br.top + br.clientHeight / 2);
+  let next = body.scrollTop + dy;
+  const maxScroll = Math.max(0, body.scrollHeight - body.clientHeight);
+  next = Math.max(0, Math.min(next, maxScroll));
+  body.scrollTop = next;
 }
 
 function syntaxHighlight(text, isComment) {
@@ -1193,7 +1218,7 @@ async function runSort() {
   for (let i = 0; i < stepsArr.length && !stopFlag; i++) {
     const s = stepsArr[i];
     renderBars(s.arr, s.highlights);
-    renderCode(s.line);
+    highlightCodeLine(s.line);
     updateStats(s.c, s.s);
 
     // audio
